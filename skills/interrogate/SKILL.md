@@ -39,17 +39,22 @@ Launch all reviewers in a single message using the Task tool.
 
 Use the `interrogate reviewers` line in the pstack settings file (`~/.cursor/rules/pstack-models.mdc` in Cursor, `~/.agents/pstack-models.md` in other harnesses), one reviewer per entry, extending or shrinking the Reviewer A/B labels below to the configured entry count. If the file or that line is missing, use the table defaults.
 
-| Subagent | Default model |
-|----------|---------------|
-| Reviewer A | `claude-opus-5-5-xhigh` |
-| Reviewer B | `grok-4.7-xhigh-fast` |
+| Subagent | Default model | Codex default model |
+|----------|---------------|---------------------|
+| Reviewer A | `claude-opus-5-5-xhigh` | `gpt-6-astra` |
+| Reviewer B | `grok-4.7-xhigh-fast` | `gpt-6.1-sol` |
+
+In Codex, use the Codex column when no reviewers are configured. Pass the model ID
+without a reasoning suffix, set `reasoning_effort: "xhigh"`, and use
+`fork_turns: "none"` so each reviewer starts independently. Other harnesses keep
+the default-model column. Explicit settings, including aliases, take precedence.
 
 For each reviewer:
 - `subagent_type`: `generalPurpose`
-- `model`: the configured `interrogate reviewers` entry, or the table default with no configured line. For an `auto` or `inherit-parent` entry, omit `model` so that reviewer runs on the parent model.
+- `model`: the configured `interrogate reviewers` entry, or the current harness's table default with no configured line. For an `auto` or `inherit-parent` entry, omit `model` so that reviewer runs on the parent model.
 - `readonly`: `true`
 
-If your subagent tool rejects a configured entry, run that reviewer on the table default of its family and say so. Families go by prefix: `claude-*` and `grok-*`. With no family match, use Reviewer A's default. If it rejects a table default, check the valid slugs in its error message or your harness's model list, pick the closest equivalent (prefer the same family and reasoning tier), spawn with it, and open a separate PR to update the default table. Do not block the review on the slug issue. Never treat an alias entry as a rejected slug or apply either fallback to it.
+If your subagent tool rejects a configured entry, run that reviewer on the current harness's table default of its family and say so. Families go by prefix: `claude-*`, `grok-*`, and `gpt-*`. With no family match, use Reviewer A's default for that harness. If it rejects a table default, check the valid slugs in its error message or your harness's model list, pick the closest equivalent (prefer the same family and reasoning tier), spawn with it, and open a separate PR to update the default table. Do not block the review on the slug issue. Never treat an alias entry as a rejected slug or apply either fallback to it.
 
 Read `references/reviewer-prompt.md` and fill in the template with:
 1. The stated intent
