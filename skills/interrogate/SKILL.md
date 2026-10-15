@@ -28,10 +28,16 @@ Launch all reviewers in a single message with the Task tool, one per entry on th
 
 **Other harnesses.** The spawns in this skill use Cursor's `Task` tool. In another harness, use its subagent tool: `Agent` in Claude Code (`subagent_type: general-purpose`), `task` in OpenCode (`subagent_type: general`), `spawn_agent` in Codex. Keep the prompt and the model. Drop parameters your tool doesn't have. If your harness has no subagent tool, as in Pi without an extension, run each reviewer yourself, one after another.
 
-| Subagent | Default model |
-|----------|---------------|
-| Reviewer A | `claude-opus-5-5-xhigh` |
-| Reviewer B | `grok-4.7-xhigh-fast` |
+| Subagent | Default model | Codex native default model |
+|----------|---------------|----------------------------|
+| Reviewer A | `claude-opus-5-5-xhigh` | `gpt-6-astra` |
+| Reviewer B | `grok-4.7-xhigh-fast` | `gpt-6.1-sol` |
+
+Use the Codex column with native `spawn_agent`; its model list does not include
+the Claude or Grok defaults. Pass `reasoning_effort: "xhigh"` separately for these
+Codex defaults. Other harnesses keep the default-model column. Configured entries
+still take precedence; report the actual models used and do not imply cross-provider
+coverage when both reviewers use OpenAI models.
 
 Each reviewer gets `subagent_type: generalPurpose`, `readonly: true`, and `model` set to its configured entry, or its table default when there is no configured line. Omit `model` for an `auto` or `inherit-parent` entry, so that reviewer runs on the parent model.
 
