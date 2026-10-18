@@ -1,6 +1,6 @@
 # Syncing this mirror
 
-This repo mirrors [`cursor/plugins/pstack`](https://github.com/cursor/plugins/tree/main/pstack) and adds its own edits: the top of `README.md` and harness-neutral rewrites in some skills.
+This repo mirrors [`cursor/plugins/pstack`](https://github.com/cursor/plugins/tree/main/pstack) and the `deslop`, `control-cli`, `control-ui`, and `verify-this` skills from `cursor-team-kit`. It adds its own edits: the top of `README.md` and harness-neutral rewrites in some skills.
 
 Two branches keep those edits safe:
 
@@ -18,11 +18,20 @@ Never copy Cursor's files onto `main` directly. That erases the edits.
    git -C /tmp/cursor-plugins sparse-checkout set pstack
    git switch upstream
    rsync -a --delete --exclude .git --exclude MIRROR.md /tmp/cursor-plugins/pstack/ ./
-   git add -A
-   git commit -m "upstream: cursor/plugins/pstack @ $(git -C /tmp/cursor-plugins rev-parse --short HEAD)"
    ```
 
-2. Merge it into `main`. Git applies only what changed upstream and keeps the mirror's edits:
+2. Mirror the four `cursor-team-kit` skill directories onto `upstream`, then commit the source snapshot:
+
+   ```bash
+   git -C /tmp/cursor-plugins sparse-checkout set cursor-team-kit
+   for skill in deslop control-cli control-ui verify-this; do
+     rsync -a --delete "/tmp/cursor-plugins/cursor-team-kit/skills/$skill/" "./skills/$skill/"
+   done
+   git add -A
+   git commit -m "upstream: cursor/plugins pstack and cursor-team-kit skills @ $(git -C /tmp/cursor-plugins rev-parse --short HEAD)"
+   ```
+
+3. Merge it into `main`. Git applies only what changed upstream and keeps the mirror's edits:
 
    ```bash
    git switch main
@@ -31,7 +40,7 @@ Never copy Cursor's files onto `main` directly. That erases the edits.
 
    A conflict means Cursor changed a line this mirror also changed. Keep Cursor's new meaning and reapply the harness-neutral wording.
 
-3. Refresh the bundled Comment Sicko prompt, then check that no new Cursor-only instructions arrived:
+4. Refresh the bundled Comment Sicko prompt, then check that no new Cursor-only instructions arrived:
 
    ```bash
    cp agents/comment-sicko.md skills/no-comments/references/comment-sicko.md
@@ -40,7 +49,7 @@ Never copy Cursor's files onto `main` directly. That erases the edits.
 
    Rewrite any new hits the same way as the existing edits. The Harness section in `skills/poteto-mode/SKILL.md` lists the mappings.
 
-4. Push both branches:
+5. Push both branches:
 
    ```bash
    git push origin main upstream
