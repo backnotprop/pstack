@@ -168,6 +168,7 @@ export interface ResolveGateParams {
 export interface SetFrontierParams {
   readonly repo: string;
   readonly forge?: Forge;
+  readonly baseBranch?: string;
   readonly prs?: readonly number[];
 }
 
@@ -1181,8 +1182,35 @@ function trunkBranch(repo: string): string {
   }
 }
 
-function resolveFrontier(repo: string, forge: Forge): readonly FrontierPr[] {
-  const trunk = trunkBranch(repo);
+function explicitBaseBranch(repo: string, branch: string): string {
+  if (
+    branch.trim().length === 0 ||
+    branch.startsWith("-") ||
+    branch.startsWith("refs/") ||
+    branch.includes("@{") ||
+    /^(?:@|HEAD|[A-Z_]+_HEAD|AUTO_MERGE)$/.test(branch)
+  ) {
+    throw new UserError(`invalid base branch: ${branch}`);
+  }
+  if (runGit({ args: ["check-ref-format", "--branch", branch], repo }) !== branch) {
+    throw new UserError(`invalid base branch: ${branch}`);
+  }
+  for (const ref of [`refs/heads/${branch}`, `refs/remotes/origin/${branch}`]) {
+    try {
+      runGit({ args: ["show-ref", "--verify", "--quiet", ref], repo });
+      return branch;
+    } catch {
+      // The branch may exist only on origin.
+    }
+  }
+  throw new UserError(`base branch ${branch} does not exist locally or on origin`);
+}
+
+function resolveFrontier(
+  repo: string,
+  forge: Forge,
+  trunk: string
+): readonly FrontierPr[] {
   const current = currentBranch(repo);
   if (current === trunk) {
     return [];
@@ -1562,7 +1590,11 @@ export function openStore(
           throw new UserError("--prs must not contain duplicates");
         }
         const old = await readFrontier(store);
-        const prs = resolveFrontier(repo, forge);
+        const base =
+          params.baseBranch === undefined
+            ? trunkBranch(repo)
+            : explicitBaseBranch(repo, params.baseBranch);
+        const prs = resolveFrontier(repo, forge, base);
         if (pin !== undefined) {
           validateFrontierPin({
             actual: prs.map((row) => row.pr),

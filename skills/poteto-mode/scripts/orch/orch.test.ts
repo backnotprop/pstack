@@ -72,7 +72,7 @@ function git({
   return result.stdout.toString().trim();
 }
 
-async function makeGitStack(directory: string): Promise<{
+async function makeGitStack(directory: string, rootBranch = "main"): Promise<{
   readonly repo: string;
   readonly mergedSha: string;
   readonly closedSha: string;
@@ -87,6 +87,14 @@ async function makeGitStack(directory: string): Promise<{
   await writeFile(join(repo, "main.txt"), "main\n");
   git({ repo, args: ["add", "."] });
   git({ repo, args: ["commit", "-m", "main"] });
+  git({ repo, args: ["update-ref", "refs/remotes/origin/main", "HEAD"] });
+  git({
+    repo,
+    args: ["symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main"],
+  });
+  if (rootBranch !== "main") {
+    git({ repo, args: ["checkout", "-b", rootBranch] });
+  }
 
   const branches = [
     "stack/merged",
@@ -113,17 +121,19 @@ async function makeGitStack(directory: string): Promise<{
 
 type FixtureState = "open" | "draft" | "merged" | "closed";
 
+interface FixturePr {
+  readonly number: number;
+  readonly state: FixtureState;
+  readonly head: string;
+  readonly base: string;
+}
+
 const FORGE_FIXTURES: Readonly<
   Record<
     Forge,
     {
       readonly fields: string;
-      readonly row: (pr: {
-        number: number;
-        state: FixtureState;
-        head: string;
-        base: string;
-      }) => Record<string, unknown>;
+      readonly row: (pr: FixturePr) => Record<string, unknown>;
     }
   >
 > = {
@@ -149,12 +159,7 @@ const FORGE_FIXTURES: Readonly<
 
 function forgeRows(
   forge: Forge,
-  prs: readonly {
-    number: number;
-    state: FixtureState;
-    head: string;
-    base: string;
-  }[]
+  prs: readonly FixturePr[]
 ): string {
   return JSON.stringify(prs.map((pr) => FORGE_FIXTURES[forge].row(pr)));
 }
@@ -164,11 +169,15 @@ async function withFakeForge<T>({
   forge,
   operation,
   currentRows,
+  rootBranch = "main",
+  rows = {},
 }: {
   directory: string;
   forge: Forge;
   operation: () => Promise<T>;
   currentRows?: string;
+  rootBranch?: string;
+  rows?: Readonly<Record<string, readonly FixturePr[]>>;
 }): Promise<T> {
   const bin = join(directory, "bin");
   const outputPath = join(directory, "forge-output.txt");
@@ -190,6 +199,22 @@ async function withFakeForge<T>({
   const { fields } = FORGE_FIXTURES[forge];
   const list = (filter: string, branch: string): string =>
     `pr list ${filter} ${branch} --state all --json ${fields}`;
+  const queries: Readonly<Record<string, readonly FixturePr[]>> = {
+    "--head stack/closed": [
+      { number: 13, state: "closed", head: "stack/closed", base: "stack/merged" },
+    ],
+    "--head stack/merged": [
+      { number: 10, state: "merged", head: "stack/merged", base: rootBranch },
+    ],
+    [`--head ${rootBranch}`]: [],
+    "--base stack/open": [
+      { number: 14, state: "draft", head: "stack/draft", base: "stack/open" },
+      { number: 15, state: "closed", head: "stack/abandoned", base: "stack/open" },
+    ],
+    "--base stack/draft": [],
+    ...rows,
+  };
+  await writeFile(join(directory, "forge-queries.txt"), "");
   const fake = join(bin, forge);
   await writeFile(
     fake,
@@ -199,30 +224,17 @@ if [ "$(pwd -P)" != "${realpathSync(join(directory, "repo"))}" ]; then
   printf '${forge} ran outside the fixture repo: %s\\n' "$(pwd -P)" >&2
   exit 2
 fi
+printf '%s\\n' "$*" >> "${join(directory, "forge-queries.txt")}"
 case "$*" in
   "${list("--head", "stack/open")}")
     cat "${outputPath}"
     ;;
-  "${list("--head", "stack/closed")}")
-    printf '%s\\n' '${forgeRows(forge, [{ number: 13, state: "closed", head: "stack/closed", base: "stack/merged" }])}'
-    ;;
-  "${list("--head", "stack/merged")}")
-    printf '%s\\n' '${forgeRows(forge, [{ number: 10, state: "merged", head: "stack/merged", base: "main" }])}'
-    ;;
-  "${list("--base", "stack/open")}")
-    printf '%s\\n' '${forgeRows(forge, [
-      { number: 14, state: "draft", head: "stack/draft", base: "stack/open" },
-      {
-        number: 15,
-        state: "closed",
-        head: "stack/abandoned",
-        base: "stack/open",
-      },
-    ])}'
-    ;;
-  "${list("--base", "stack/draft")}")
-    printf '[]\\n'
-    ;;
+${Object.entries(queries).map(([query, prs]) => {
+  const [filter, branch] = query.split(" ");
+  return `  "${list(filter!, branch!)}")
+    printf '%s\\n' '${forgeRows(forge, prs)}'
+    ;;`;
+}).join("\n")}
   *)
     printf 'unexpected ${forge} arguments: %s\\n' "$*" >&2
     exit 2
@@ -651,6 +663,260 @@ describe("Store", () => {
 });
 
 describe("orch CLI", () => {
+  for (const forge of ["gh", "origin"] as const) {
+    for (const mode of [
+      "explicit integration root",
+      "remote-only integration root",
+      "origin/HEAD default",
+      "main fallback",
+      "main origin/HEAD default",
+    ] as const) {
+      it(`resolves and persists the pinned ${forge} CLI frontier with ${mode}`, async () => {
+        const directory = await makeDirectory();
+        const integration = !mode.startsWith("main");
+        const rootBranch = integration ? "integration/release" : "main";
+        const stack = await makeGitStack(directory, rootBranch);
+        const explicit = mode.includes("integration root");
+        if (mode === "remote-only integration root") {
+          git({
+            repo: stack.repo,
+            args: ["update-ref", "refs/remotes/origin/integration/release", rootBranch],
+          });
+          git({ repo: stack.repo, args: ["branch", "-D", rootBranch] });
+        } else if (mode === "origin/HEAD default") {
+          git({
+            repo: stack.repo,
+            args: ["update-ref", "refs/remotes/origin/integration/release", rootBranch],
+          });
+          git({
+            repo: stack.repo,
+            args: ["symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/integration/release"],
+          });
+        } else if (mode === "main fallback") {
+          git({
+            repo: stack.repo,
+            args: ["symbolic-ref", "--delete", "refs/remotes/origin/HEAD"],
+          });
+        }
+        expect(runCli(["--store", directory, "init"]).code).toBe(0);
+        await withFakeForge({
+          directory,
+          forge,
+          rootBranch,
+          operation: async () => {
+            const result = runCli([
+              "--store", directory, "--json", "frontier", "set",
+              "--repo", stack.repo, "--forge", forge,
+              ...(explicit ? ["--base", rootBranch] : []),
+              "--prs", "10,13,11,14",
+            ]);
+            expect(result.stderr).toBe("");
+            expect(result.code).toBe(0);
+            const expected = {
+              generation: 1,
+              prs: [
+                { pr: 10, branches: "stack/merged", sha: stack.mergedSha, state: "MERGED" },
+                { pr: 13, branches: "stack/closed", sha: stack.closedSha, state: "CLOSED" },
+                { pr: 11, branches: "stack/open", sha: stack.openSha, state: "OPEN" },
+                { pr: 14, branches: "stack/draft", sha: stack.draftSha, state: "OPEN" },
+              ],
+              lowestUnmerged: 11,
+            };
+            expect(JSON.parse(result.stdout)).toEqual(expected);
+            const shown = runCli(["--store", directory, "--json", "frontier", "show"]);
+            expect(shown.code).toBe(0);
+            expect(JSON.parse(shown.stdout)).toEqual(expected);
+            expect(JSON.parse(await readFile(join(directory, "frontier.json"), "utf8"))).toEqual(expected);
+            if (explicit) {
+              expect(git({
+                repo: stack.repo,
+                args: ["symbolic-ref", "--short", "refs/remotes/origin/HEAD"],
+              })).toBe("origin/main");
+            }
+            expect(await readFile(join(directory, "forge-queries.txt"), "utf8"))
+              .not.toContain(`--head ${rootBranch} `);
+          },
+        });
+      });
+    }
+
+    it(`reports the missing integration PR with ${forge} when --base is omitted`, async () => {
+      const directory = await makeDirectory();
+      const stack = await makeGitStack(directory, "integration/release");
+      expect(runCli(["--store", directory, "init"]).code).toBe(0);
+      const before = await readFile(join(directory, "frontier.json"), "utf8");
+      await withFakeForge({
+        directory,
+        forge,
+        rootBranch: "integration/release",
+        operation: async () => {
+          const result = runCli([
+            "--store", directory, "frontier", "set", "--repo", stack.repo,
+            "--forge", forge,
+          ]);
+          expect(result.code).toBe(1);
+          expect(result.stderr).toContain("branch integration/release has no pull request");
+          expect(result.stderr).not.toContain("unexpected");
+          expect(await readFile(join(directory, "frontier.json"), "utf8")).toBe(before);
+        },
+      });
+    });
+
+    it(`returns an exact empty ${forge} CLI frontier at the explicit base without querying the forge`, async () => {
+      const directory = await makeDirectory();
+      const stack = await makeGitStack(directory, "integration/release");
+      git({ repo: stack.repo, args: ["checkout", "integration/release"] });
+      expect(runCli(["--store", directory, "init"]).code).toBe(0);
+      await withFakeForge({
+        directory,
+        forge,
+        rootBranch: "integration/release",
+        operation: async () => {
+          const result = runCli([
+            "--store", directory, "--json", "frontier", "set",
+            "--repo", stack.repo, "--forge", forge,
+            "--base", "integration/release",
+          ]);
+          expect(result.code).toBe(0);
+          expect(result.stderr).toBe("");
+          const expected = { generation: 1, prs: [], lowestUnmerged: null };
+          expect(JSON.parse(result.stdout)).toEqual(expected);
+          expect(JSON.parse(await readFile(join(directory, "frontier.json"), "utf8"))).toEqual(expected);
+          expect(await readFile(join(directory, "forge-queries.txt"), "utf8")).toBe("");
+        },
+      });
+    });
+  }
+
+  it("rejects invalid and nonexistent explicit bases without changing the frontier or querying the forge", async () => {
+    const directory = await makeDirectory();
+    const stack = await makeGitStack(directory, "integration/release");
+    expect(runCli(["--store", directory, "init"]).code).toBe(0);
+    await withFakeForge({
+      directory,
+      forge: "gh",
+      rootBranch: "integration/release",
+      operation: async () => {
+        const args = [
+          "--store", directory, "--json", "frontier", "set", "--repo", stack.repo,
+        ];
+        expect(runCli([...args, "--base", "integration/release"]).code).toBe(0);
+        const cliFrontier = JSON.parse(runCli([
+          "--store", directory, "--json", "frontier", "show",
+        ]).stdout);
+        const cliBefore = await readFile(join(directory, "frontier.json"), "utf8");
+        const cliQueries = await readFile(join(directory, "forge-queries.txt"), "utf8");
+        const invalidBases = [
+          "", "--help", "-main", "HEAD", "HEAD~1", "main^0", "main..stack/open",
+          "@", "@{-1}", " integration/release ", "\tintegration/release\n",
+          stack.openSha, "refs/heads/main", "bad..branch", "integration/missing",
+        ];
+        for (const base of invalidBases) {
+          const result = runCli([...args, `--base=${base}`]);
+          expect(result.code).toBe(1);
+          expect(result.stderr).toMatch(
+            /invalid base branch:|git check-ref-format --branch [\s\S]* failed:|base branch [\s\S]* does not exist locally or on origin/
+          );
+          expect(result.stderr).not.toContain("store lock held");
+          expect(result.stderr).not.toContain("unknown option");
+          expect(await readFile(join(directory, "frontier.json"), "utf8")).toBe(cliBefore);
+          expect(await readFile(join(directory, "forge-queries.txt"), "utf8")).toBe(cliQueries);
+        }
+        const store = useStore(directory);
+        expect(await store.frontier.set({
+          repo: stack.repo,
+          baseBranch: "integration/release",
+        })).toEqual({ ...cliFrontier, generation: 2 });
+        const before = await readFile(join(directory, "frontier.json"), "utf8");
+        const queries = await readFile(join(directory, "forge-queries.txt"), "utf8");
+        for (const base of invalidBases) {
+          await expect(store.frontier.set({
+            repo: stack.repo,
+            baseBranch: base,
+          })).rejects.toBeInstanceOf(UserError);
+          expect(await readFile(join(directory, "frontier.json"), "utf8")).toBe(before);
+          expect(await readFile(join(directory, "forge-queries.txt"), "utf8")).toBe(queries);
+        }
+      },
+    });
+  });
+
+  const invalidFrontierScenarios: readonly {
+    name: string;
+    pin?: string;
+    rows: Readonly<Record<string, readonly FixturePr[]>>;
+    error: string;
+  }[] = [
+    {
+      name: "pin mismatch",
+      pin: "13,10,11,14",
+      rows: {},
+      error: "frontier pin mismatch",
+    },
+    {
+      name: "upward cycle",
+      rows: {
+        "--head stack/merged": [
+          { number: 10, state: "merged", head: "stack/merged", base: "stack/open" },
+        ],
+      },
+      error: "pull request base chain loops",
+    },
+    {
+      name: "downward cycle",
+      rows: {
+        "--base stack/draft": [
+          { number: 11, state: "open", head: "stack/open", base: "stack/draft" },
+        ],
+      },
+      error: "pull request base chain loops",
+    },
+    {
+      name: "nonlinear open children",
+      rows: {
+        "--base stack/open": [
+          { number: 14, state: "draft", head: "stack/draft", base: "stack/open" },
+          { number: 16, state: "open", head: "stack/other", base: "stack/open" },
+        ],
+      },
+      error: "stack is not linear",
+    },
+  ];
+  for (const scenario of invalidFrontierScenarios) {
+    it(`preserves the CLI frontier on an explicit-base ${scenario.name}`, async () => {
+      const directory = await makeDirectory();
+      const stack = await makeGitStack(directory, "integration/release");
+      expect(runCli(["--store", directory, "init"]).code).toBe(0);
+      const args = [
+        "--store", directory, "--json", "frontier", "set",
+        "--repo", stack.repo, "--base", "integration/release",
+      ];
+      await withFakeForge({
+        directory,
+        forge: "gh",
+        rootBranch: "integration/release",
+        operation: async () => {
+          expect(runCli(args).code).toBe(0);
+        },
+      });
+      const before = await readFile(join(directory, "frontier.json"), "utf8");
+      await withFakeForge({
+        directory,
+        forge: "gh",
+        rootBranch: "integration/release",
+        rows: scenario.rows,
+        operation: async () => {
+          const result = runCli([
+            ...args, ...(scenario.pin ? ["--prs", scenario.pin] : []),
+          ]);
+          expect(result.code).toBe(1);
+          expect(result.stderr).toContain(scenario.error);
+          expect(await readFile(join(directory, "frontier.json"), "utf8")).toBe(before);
+        },
+      });
+    });
+  }
+
   it("prints commander help and rejects invalid parsing with exit 1", async () => {
     const help = runCli(["--help"]);
     expect(help.code).toBe(0);
