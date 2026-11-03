@@ -4,6 +4,7 @@ Each check against [`cursor/plugins/pstack`](https://github.com/cursor/plugins/t
 
 | Date | Upstream | Result |
 |---|---|---|
+| 2026-11-03 | 0.15.36 | No change in pstack. Upstream repo head `ae5650f`. |
 | 2026-11-02 | 0.15.36 | No change in pstack. Upstream repo head `ae5650f`. |
 | 2026-11-01 | 0.15.36 | No change in pstack. Upstream repo head `ae5650f`. |
 | 2026-10-31 | 0.15.36 | No change in pstack. Upstream repo head `4dd1d05`. |
