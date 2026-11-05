@@ -55,7 +55,7 @@ export function* fileLines(file: string) {
         kept = end;
         continue;
       }
-      yield* buf.toString("utf8", 0, cut).split(/\r?\n/);
+      yield* buf.toString("utf8", 0, buf[cut - 1] === 13 ? cut - 1 : cut).split(/\r?\n/);
       kept = buf.copy(buf, 0, cut + 1, end);
     }
     yield buf.toString("utf8", 0, kept);
@@ -141,7 +141,7 @@ function* outputLines(output: Output) {
       rest = buf;
       continue;
     }
-    yield* utf8.decode(buf.subarray(0, cut)).split(/\r?\n/);
+    yield* utf8.decode(buf.subarray(0, buf[cut - 1] === 13 ? cut - 1 : cut)).split(/\r?\n/);
     rest = buf.subarray(cut + 1);
   }
   yield utf8.decode(rest);
