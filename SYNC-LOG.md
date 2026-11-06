@@ -4,6 +4,7 @@ Each check against [`cursor/plugins/pstack`](https://github.com/cursor/plugins/t
 
 | Date | Upstream | Result |
 |---|---|---|
+| 2026-11-06 | 0.15.36 | No change in pstack. Upstream repo head `2776ddd`. #17 has no reply from the reporter. cursor/plugins#1147 is still open. |
 | 2026-11-05 | 0.15.36 | No change in pstack. Upstream repo head `2776ddd`. Fixed a gap in the #17 patch: the last line of each chunk kept its `\r`. cursor/plugins#1147 is still open. |
 | 2026-11-04 | 0.15.36 | Second check: no change in pstack. Upstream repo head `bb68f23`. Carrying the #17 Windows patch (06572d2), and #17 stays open for items 4 and 5. cursor/plugins#1147 and #1151 are still open. |
 | 2026-11-04 | 0.15.36 | No change in pstack. Upstream repo head `bb68f23`. New issue #17: statechart fails on Windows. Upstream tracks it in cursor/plugins#1170, with fix PR #1147 open. |
