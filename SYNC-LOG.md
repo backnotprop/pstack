@@ -4,6 +4,7 @@ Each check against [`cursor/plugins/pstack`](https://github.com/cursor/plugins/t
 
 | Date | Upstream | Result |
 |---|---|---|
+| 2026-11-10 | 0.15.36 | No change in pstack. Upstream repo head `de8ee15`. #17 has no new replies. cursor/plugins#1147 is still open. |
 | 2026-11-09 | 0.15.36 | No change in pstack. Upstream repo head `236e548`. #17 has no new replies. cursor/plugins#1147 is still open. Separately, the sponsor cards now use the new glass Plannotator icon (0b239bb). |
 | 2026-11-08 | 0.15.36 | No change in pstack. Upstream repo head `6b03002`, the same as the last check. #17 has no new replies. cursor/plugins#1147 is still open. |
 | 2026-11-07 | 0.15.36 | No change in pstack. Upstream repo head `6b03002`. #17 has no new replies. cursor/plugins#1147 is still open. |
