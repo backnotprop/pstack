@@ -48,23 +48,23 @@ describe("readiness truth table", () => {
     const cases: readonly [
       PullRequestFacts["mergeStateStatus"],
       RollupState,
-      "allowed" | "refused",
+      "allowed" | "refused" | "pending",
     ][] = [
       ["BLOCKED", "FAILURE", "refused"],
       ["BLOCKED", "ERROR", "refused"],
-      ["BLOCKED", "PENDING", "allowed"],
+      ["BLOCKED", "PENDING", "pending"],
       ["UNSTABLE", "FAILURE", "allowed"],
-      ["UNKNOWN", "ERROR", "allowed"],
-      ["UNKNOWN", "EXPECTED", "allowed"],
-      ["UNKNOWN", "FAILURE", "allowed"],
-      ["UNKNOWN", "PENDING", "allowed"],
-      ["UNKNOWN", "SUCCESS", "allowed"],
-      ["UNKNOWN", null, "allowed"],
+      ["UNKNOWN", "ERROR", "pending"],
+      ["UNKNOWN", "EXPECTED", "pending"],
+      ["UNKNOWN", "FAILURE", "pending"],
+      ["UNKNOWN", "PENDING", "pending"],
+      ["UNKNOWN", "SUCCESS", "pending"],
+      ["UNKNOWN", null, "pending"],
       ["CLEAN", "SUCCESS", "allowed"],
     ];
     for (const [mergeStateStatus, headRollupState, expected] of cases) {
       expect(
-        assessGitHubMerge({ mergeStateStatus, headRollupState }).kind
+        assessGitHubMerge({ mergeable: "MERGEABLE", mergeStateStatus, headRollupState }).kind
       ).toBe(expected);
     }
   });
@@ -194,7 +194,7 @@ it("attributes a stack wait to the PR whose checks are pending, not the bottom",
   expect(decision).toMatchObject({
     kind: "waiting",
     frontier: { number: 21 },
-    pending: [{ name: "upstack-build" }],
+    reason: { kind: "pending-checks", pending: [{ name: "upstack-build" }] },
   });
 });
 
@@ -479,4 +479,58 @@ describe("polling deadline sleeps", () => {
     expect(sleeps).toEqual([60]);
   });
 
+});
+
+
+describe("unproven GitHub readiness", () => {
+  for (const facts of [
+    { mergeStateStatus: "UNKNOWN" },
+    { mergeable: "UNKNOWN" },
+  ] satisfies readonly Partial<PullRequestFacts>[]) {
+    it(`waits for ${JSON.stringify(facts)} in all decision paths`, async () => {
+      const unknown = await readSnapshot({
+        reader: fakeReader({ facts }),
+        context: context(80),
+        pendingHistory: "include",
+        allowDraft: false,
+      });
+      const waiting = {
+        kind: "waiting",
+        frontier: { number: 80 },
+        reason: { kind: "github-pending" },
+      };
+      expect(classifyPr(unknown)).toMatchObject(waiting);
+      expect(selectTierMajorStackDecision([unknown])).toMatchObject(waiting);
+      const state = applyQueueSnapshot(createQueueState([context(80)], 0), unknown, 0, options).state;
+      expect(evaluateQueue(state, 0, options)).toMatchObject(waiting);
+    });
+  }
+
+  for (const state of ["PENDING", "EXPECTED"] as const) {
+    it(`waits for a ${state} head rollup despite a settled visible list`, async () => {
+      const snapshot = await readSnapshot({
+        reader: fakeReader({ commitRollups: [{ oid: "head", state }] }),
+        context: context(81),
+        pendingHistory: "include",
+        allowDraft: false,
+      });
+      expect(classifyPr(snapshot)).toMatchObject({ kind: "waiting", reason: { kind: "github-pending" } });
+    });
+  }
+
+  for (const fixture of [
+    { facts: { mergeStateStatus: "UNKNOWN" }, fastPath: { kind: "checks", checks: [failedCheck()] } },
+    { facts: { mergeStateStatus: "UNKNOWN", mergeable: "CONFLICTING" } },
+    { facts: { mergeStateStatus: "UNKNOWN", reviewDecision: "CHANGES_REQUESTED" } },
+  ] satisfies Parameters<typeof fakeReader>[0][]) {
+    it(`preserves blockers while readiness is unknown for ${JSON.stringify(fixture)}`, async () => {
+      const snapshot = await readSnapshot({
+        reader: fakeReader(fixture),
+        context: context(82),
+        pendingHistory: "include",
+        allowDraft: false,
+      });
+      expect(classifyPr(snapshot).kind).toBe("blocker");
+    });
+  }
 });

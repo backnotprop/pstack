@@ -6,28 +6,54 @@ import {
 import type * as T from "./types.ts";
 import { nonEmpty } from "./types.ts";
 export function assessGitHubMerge(args: {
+  readonly mergeable: T.PullRequestFacts["mergeable"];
   readonly mergeStateStatus: T.MergeStateStatus;
   readonly headRollupState: T.RollupState;
 }): T.GitHubMergeAssessment {
-  if (args.mergeStateStatus === "BLOCKED") {
-    if (args.headRollupState === "ERROR" || args.headRollupState === "FAILURE")
+  const { mergeable, mergeStateStatus, headRollupState } = args;
+  if (mergeStateStatus === "UNKNOWN")
+    return {
+      kind: "pending",
+      reason: "merge-state-unknown",
+      mergeStateStatus,
+      headRollupState,
+    };
+  if (headRollupState === "PENDING" || headRollupState === "EXPECTED")
+    return {
+      kind: "pending",
+      reason: "rollup-pending",
+      mergeStateStatus,
+      headRollupState,
+    };
+  if (mergeStateStatus === "BLOCKED") {
+    if (headRollupState === "ERROR" || headRollupState === "FAILURE")
+      return { kind: "refused", mergeStateStatus, headRollupState };
+    if (mergeable === "UNKNOWN")
       return {
-        kind: "refused",
-        mergeStateStatus: args.mergeStateStatus,
-        headRollupState: args.headRollupState,
+        kind: "pending",
+        reason: "mergeability-unknown",
+        mergeStateStatus,
+        headRollupState,
       };
     return {
       kind: "allowed",
       basis: "rollup",
-      mergeStateStatus: args.mergeStateStatus,
-      headRollupState: args.headRollupState,
+      mergeStateStatus,
+      headRollupState,
     };
   }
+  if (mergeable === "UNKNOWN")
+    return {
+      kind: "pending",
+      reason: "mergeability-unknown",
+      mergeStateStatus,
+      headRollupState,
+    };
   return {
     kind: "allowed",
     basis: "merge-state",
-    mergeStateStatus: args.mergeStateStatus,
-    headRollupState: args.headRollupState,
+    mergeStateStatus,
+    headRollupState,
   };
 }
 async function mergeAssessment(
@@ -45,6 +71,7 @@ async function mergeAssessment(
       (commit) => commit.oid !== facts.headRefOid && commit.state === "SUCCESS"
     ),
     github: assessGitHubMerge({
+      mergeable: facts.mergeable,
       mergeStateStatus: facts.mergeStateStatus,
       headRollupState,
     }),
@@ -114,6 +141,14 @@ export async function readSnapshot(args: {
       };
     else if (pending !== null)
       ci = { ...base, kind: "ci-pending", failed: [], pending };
+    else if (merge.github.kind === "pending")
+      ci = {
+        ...base,
+        kind: "ci-github-pending",
+        failed: [],
+        pending: [],
+        github: merge.github,
+      };
     else
       ci = {
         ...base,
@@ -215,6 +250,14 @@ function readyContribution(
     },
   };
 }
+function waitingReason(row: T.PrSnapshot): T.CiWaitReason | null {
+  if (row.kind !== "open") return null;
+  if (row.ci.kind === "ci-pending")
+    return { kind: "pending-checks", pending: row.ci.pending };
+  if (row.ci.kind === "ci-github-pending")
+    return { kind: "github-pending", github: row.ci.github };
+  return null;
+}
 export function classifyPr(
   row: T.PrSnapshot,
   allowDraft = false
@@ -226,8 +269,9 @@ export function classifyPr(
     gateBlocker(row, allowDraft),
   ])
     if (blocker !== null) return { kind: "blocker", blocker };
-  if (row.kind === "open" && row.ci.kind === "ci-pending")
-    return { kind: "waiting", frontier: row.context, pending: row.ci.pending };
+  const reason = waitingReason(row);
+  if (reason !== null)
+    return { kind: "waiting", frontier: row.context, reason };
   const ready = readyContribution(row, allowDraft);
   if (ready === null) throw new Error("snapshot has no classified decision");
   return ready.kind === "merged-pr"
@@ -247,13 +291,11 @@ export function selectTierMajorStackDecision(
     const blocker = gateBlocker(row, allowDraft);
     if (blocker !== null) return { kind: "blocker", blocker };
   }
-  for (const row of rows)
-    if (row.kind === "open" && row.ci.kind === "ci-pending")
-      return {
-        kind: "waiting",
-        frontier: row.context,
-        pending: row.ci.pending,
-      };
+  for (const row of rows) {
+    const reason = waitingReason(row);
+    if (reason !== null)
+      return { kind: "waiting", frontier: row.context, reason };
+  }
   const prs = nonEmpty(
     rows
       .map((row) => readyContribution(row, allowDraft))
@@ -501,7 +543,7 @@ export async function runSimple(args: {
         kind: "WAITING",
         terminal: false,
         frontier: decision.frontier,
-        reason: { kind: "pending-checks", pending: decision.pending },
+        reason: decision.reason,
       })
     );
     return {
@@ -512,7 +554,7 @@ export async function runSimple(args: {
           kind: "TIMEOUT",
           terminal: true,
           exitCode: 5,
-          reason: { kind: "pending-checks", pending: decision.pending },
+          reason: decision.reason,
         }),
     };
   };
@@ -640,10 +682,7 @@ export type QueueEvaluation =
       readonly state: QueueState;
       readonly frontier: T.PrContext;
       readonly reason:
-        | {
-            readonly kind: "pending-checks";
-            readonly pending: T.NonEmpty<T.PendingCheck>;
-          }
+        | T.CiWaitReason
         | { readonly kind: "merge-queue"; readonly unmergedCount: number };
       readonly emit: boolean;
     };
@@ -692,16 +731,14 @@ export function evaluateQueue(
       unmergedCount: active.length,
     };
   const row = rows[0];
-  const pending =
-    row.kind === "open" && row.ci.kind === "ci-pending" ? row.ci.pending : null;
-  const reason =
-    pending === null
-      ? ({ kind: "merge-queue", unmergedCount: active.length } as const)
-      : ({ kind: "pending-checks", pending } as const);
+  const reason = waitingReason(row) ??
+    ({ kind: "merge-queue", unmergedCount: active.length } as const);
   const key =
     reason.kind === "pending-checks"
       ? `pending:${frontier.number}:${reason.pending.length}`
-      : `queue:${frontier.number}:${reason.unmergedCount}`;
+      : reason.kind === "github-pending"
+        ? `github:${frontier.number}:${reason.github.reason}`
+        : `queue:${frontier.number}:${reason.unmergedCount}`;
   return {
     kind: "waiting",
     state: { ...state, frontier, lastWaitKey: key },

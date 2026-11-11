@@ -75,6 +75,16 @@ describe("GitHub readiness after a push", () => {
     expect(JSON.parse(harness.stdout.at(-1) ?? "null")).toMatchObject({ kind: "TIMEOUT" });
     expect(harness.stdout.join("")).not.toContain('"kind":"READY"');
   });
+
+  it("shows unknown readiness in a status-only table", async () => {
+    const harness = testRuntime(fakeReader({ facts: { mergeStateStatus: "UNKNOWN" } }));
+    const code = await main([
+      "--owner", "owner", "--repo", "repo", "--pr", "1", "--status-only", "--pretty",
+    ], harness.runtime);
+    expect(code).toBe(0);
+    expect(harness.stdout.join("")).toContain("GitHub is still computing mergeability");
+    expect(harness.stdout.join("")).toContain("computing |");
+  });
 });
 
 function testRuntime(reader: GitHubReader): {

@@ -104,16 +104,34 @@ export type GitHubMergeAllowed =
   | {
       readonly kind: "allowed";
       readonly basis: "merge-state";
-      readonly mergeStateStatus: Exclude<MergeStateStatus, "BLOCKED">;
-      readonly headRollupState: RollupState;
+      readonly mergeStateStatus: Exclude<
+        MergeStateStatus,
+        "BLOCKED" | "UNKNOWN"
+      >;
+      readonly headRollupState: Exclude<RollupState, "PENDING" | "EXPECTED">;
     }
   | {
       readonly kind: "allowed";
       readonly basis: "rollup";
       readonly mergeStateStatus: "BLOCKED";
-      readonly headRollupState: Exclude<RollupState, "ERROR" | "FAILURE">;
+      readonly headRollupState: Exclude<
+        RollupState,
+        "ERROR" | "FAILURE" | "PENDING" | "EXPECTED"
+      >;
     };
-export type GitHubMergeAssessment = GitHubMergeAllowed | GitHubMergeRefusal;
+export interface GitHubMergePending {
+  readonly kind: "pending";
+  readonly reason:
+    | "merge-state-unknown"
+    | "mergeability-unknown"
+    | "rollup-pending";
+  readonly mergeStateStatus: MergeStateStatus;
+  readonly headRollupState: RollupState;
+}
+export type GitHubMergeAssessment =
+  | GitHubMergeAllowed
+  | GitHubMergeRefusal
+  | GitHubMergePending;
 interface CiBase {
   readonly source: CheckRead["source"];
   readonly all: NonEmpty<Check>;
@@ -142,7 +160,18 @@ export type CiClean = CiBase & {
   readonly pending: readonly [];
   readonly github: GitHubMergeAllowed;
 };
-export type CiState = CiFailing | CiGithubRejected | CiPending | CiClean;
+export type CiGithubPending = CiBase & {
+  readonly kind: "ci-github-pending";
+  readonly failed: readonly [];
+  readonly pending: readonly [];
+  readonly github: GitHubMergePending;
+};
+export type CiState =
+  | CiFailing
+  | CiGithubRejected
+  | CiPending
+  | CiGithubPending
+  | CiClean;
 export type PrSnapshot =
   | {
       readonly kind: "merged" | "closed";
@@ -230,10 +259,13 @@ export type QueryFailure =
       readonly detail: string;
       readonly rawValue: string;
     };
+export type CiWaitReason =
+  | { readonly kind: "pending-checks"; readonly pending: NonEmpty<PendingCheck> }
+  | { readonly kind: "github-pending"; readonly github: GitHubMergePending };
 /**
  * `frontier` names the lowest unmerged PR that is actually waiting, and
- * `pending` is that PR's checks only. Pooling every row's pending under the
- * bottom PR's number misattributed upstack waits to the frontier.
+ * `reason` describes that PR's wait only. Pooling every row's pending
+ * under the bottom PR's number misattributed upstack waits to the frontier.
  *
  * This decision serves single and `--stack` mode. Queued mode deliberately
  * reports its own merge frontier instead: when that PR is blocker-free it
@@ -244,7 +276,7 @@ export type QueryFailure =
 export interface WaitingDecision {
   readonly kind: "waiting";
   readonly frontier: PrContext;
-  readonly pending: NonEmpty<PendingCheck>;
+  readonly reason: CiWaitReason;
 }
 export type PrDecision =
   | { readonly kind: "blocker"; readonly blocker: MergeBlocker }
@@ -286,10 +318,7 @@ export type ProgressVerdict =
   | (Progress<"WAITING"> & {
       readonly frontier: PrContext;
       readonly reason:
-        | {
-            readonly kind: "pending-checks";
-            readonly pending: NonEmpty<PendingCheck>;
-          }
+        | CiWaitReason
         | { readonly kind: "merge-queue"; readonly unmergedCount: number };
     })
   | (Progress<"ADVANCE", "queued-stack"> & {
@@ -333,10 +362,7 @@ export type BlockerVerdict =
     });
 export type TimeoutVerdict = Terminal<"TIMEOUT", 5> & {
   readonly reason:
-    | {
-        readonly kind: "pending-checks";
-        readonly pending: NonEmpty<PendingCheck>;
-      }
+    | CiWaitReason
     | { readonly kind: "status-unavailable"; readonly failure: QueryFailure }
     | {
         readonly kind: "queued-stack";
