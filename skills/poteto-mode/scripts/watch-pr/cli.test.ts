@@ -1,11 +1,81 @@
 import { describe, expect, it } from "bun:test";
 import { type CliRuntime, main, parseArgs } from "./cli.ts";
-import { fakeReader, passingCheck } from "./fakes.test-helper.ts";
+import { fakeReader, passingCheck, pendingCheck } from "./fakes.test-helper.ts";
 import { renderJson, renderPretty } from "./render.ts";
 import type { GitHubReader, WatcherVerdict } from "./types.ts";
 import { parsePrNumber } from "./types.ts";
 
 const silentIo = { stdout: () => {}, stderr: () => {} };
+
+describe("GitHub readiness after a push", () => {
+  for (const firstCheck of [
+    passingCheck("DCO"),
+    { ...passingCheck("invalidate"), kind: "skipped", reportedState: "SKIPPED" },
+  ] as const) {
+    for (const mode of ["single", "stack"] as const) {
+      it(`waits for build checks after only ${firstCheck.name} in ${mode} mode`, async () => {
+        let phase = 0;
+        const initializing = fakeReader({
+          facts: { mergeStateStatus: "UNKNOWN", isDraft: true },
+          fastPath: { kind: "checks", checks: [firstCheck] },
+        });
+        const building = fakeReader({
+          facts: { mergeStateStatus: "BLOCKED", isDraft: true },
+          fastPath: { kind: "checks", checks: [firstCheck, pendingCheck("build")] },
+          commitRollups: [{ oid: "head", state: "PENDING" }],
+        });
+        const complete = fakeReader({
+          facts: { isDraft: true },
+          fastPath: { kind: "checks", checks: [firstCheck, passingCheck("build")] },
+        });
+        const current = () => phase === 0 ? initializing : phase === 1 ? building : complete;
+        const reader: GitHubReader = {
+          ...initializing,
+          pullRequest: (context) => current().pullRequest(context),
+          checksFastPath: (context) => current().checksFastPath(context),
+          commitRollups: (context) => current().commitRollups(context),
+        };
+        const harness = testRuntime(reader);
+        const code = await main([
+          "--owner", "owner", "--repo", "repo", "--pr", "1", "--allow-draft",
+          ...(mode === "stack" ? ["--stack"] : []),
+        ], {
+          ...harness.runtime,
+          clock: {
+            now: () => phase * 60,
+            observedAt: () => "2026-11-11T06:13:24.775Z",
+            async sleep() { phase += 1; },
+          },
+        });
+        expect(code).toBe(0);
+        expect(phase).toBe(2);
+        const events: unknown[] = harness.stdout.map((line) => JSON.parse(line));
+        expect(events).toContainEqual(expect.objectContaining({ kind: "WAITING" }));
+        expect(events.at(-1)).toMatchObject({ kind: "READY" });
+        expect(harness.stdout.at(-1)).toContain('"name":"build"');
+      });
+    }
+  }
+
+  it("times out instead of reporting READY when GitHub stays unknown", async () => {
+    const harness = testRuntime(fakeReader({ facts: { mergeStateStatus: "UNKNOWN" } }));
+    let now = 0;
+    const code = await main([
+      "--owner", "owner", "--repo", "repo", "--pr", "1", "--timeout", "5",
+    ], {
+      ...harness.runtime,
+      clock: {
+        now: () => now,
+        observedAt: () => "2026-11-11T06:13:24.775Z",
+        async sleep(seconds) { now += seconds; },
+      },
+    });
+    expect(code).toBe(5);
+    expect(now).toBe(5);
+    expect(JSON.parse(harness.stdout.at(-1) ?? "null")).toMatchObject({ kind: "TIMEOUT" });
+    expect(harness.stdout.join("")).not.toContain('"kind":"READY"');
+  });
+});
 
 function testRuntime(reader: GitHubReader): {
   readonly runtime: CliRuntime;
