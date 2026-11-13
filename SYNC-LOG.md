@@ -4,6 +4,7 @@ Each check against [`cursor/plugins/pstack`](https://github.com/cursor/plugins/t
 
 | Date | Upstream | Result |
 |---|---|---|
+| 2026-11-13 | 0.15.36 | No change in pstack. Upstream repo head `3dbd22f`. New PR #20 (`unslop` style rules), waiting on a decision. #18 is still a draft. #17 has no new replies. cursor/plugins#1147 is still open. |
 | 2026-11-11 | 0.15.36 | No change in pstack. Upstream repo head `5866df5`. New issue #19 (Arena has no GPT model family) and new draft PR #18 (`watch-pr` waits while GitHub computes merge readiness), both waiting on a decision. #17 has no new replies. cursor/plugins#1147 is still open. |
 | 2026-11-10 | 0.15.36 | No change in pstack. Upstream repo head `de8ee15`. #17 has no new replies. cursor/plugins#1147 is still open. |
 | 2026-11-09 | 0.15.36 | No change in pstack. Upstream repo head `236e548`. #17 has no new replies. cursor/plugins#1147 is still open. Separately, the sponsor cards now use the new glass Plannotator icon (0b239bb). |
