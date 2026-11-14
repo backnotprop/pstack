@@ -33,6 +33,8 @@ Never copy Cursor's files onto `main` directly. That erases the edits.
 
    Also keep the community fixes listed under "What this mirror changes" in `README.md`, unless Cursor has shipped the same fix. Then take Cursor's version and drop the fix from that list.
 
+   Carry only bug fixes. A PR that changes what a skill tells the agent, like a new style rule, belongs upstream at cursor/plugins. Decline it here.
+
 3. Refresh the bundled Comment Sicko prompt, then check that no new Cursor-only instructions arrived:
 
    ```bash
