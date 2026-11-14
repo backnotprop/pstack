@@ -7,6 +7,8 @@ function ciCell(row: T.PrSnapshot): string {
   switch (row.ci.kind) {
     case "ci-clean":
       return "✅";
+    case "ci-github-pending":
+      return `⏳ ${githubPendingLabel(row.ci.github)}${was}`;
     case "ci-pending":
       return `⏳ ${row.ci.pending.length} pending${was}`;
     case "ci-failing":
@@ -40,7 +42,9 @@ function mergeCell(row: T.PrSnapshot): string {
     row.facts.mergeStateStatus === "DIRTY" ||
     row.facts.mergeStateStatus === "CONFLICTING"
     ? "⚠️ conflict"
-    : "✅";
+    : row.facts.mergeable === "UNKNOWN" || row.facts.mergeStateStatus === "UNKNOWN"
+      ? "⏳ computing"
+      : "✅";
 }
 export function renderStatusTable(rows: T.NonEmpty<T.PrSnapshot>): string {
   const lines = ["| PR | CI | Review | Merge |", "| --- | --- | --- | --- |"];
@@ -130,6 +134,11 @@ function renderBlocker(blocker: T.MergeBlocker | StatusQueryBlocker): string {
     }
   }
 }
+function githubPendingLabel(github: T.GitHubMergePending): string {
+  return github.reason === "rollup-pending"
+    ? "GitHub reports checks pending"
+    : "GitHub is still computing mergeability";
+}
 export function renderPretty(verdict: T.WatcherVerdict): string {
   switch (verdict.kind) {
     case "QUEUE":
@@ -137,6 +146,8 @@ export function renderPretty(verdict: T.WatcherVerdict): string {
     case "STATUS":
       return renderStatusTable(verdict.rows);
     case "WAITING":
+      if (verdict.reason.kind === "github-pending")
+        return `WAITING: frontier=#${verdict.frontier.number}; ${githubPendingLabel(verdict.reason.github)}\n`;
       return verdict.reason.kind === "pending-checks"
         ? `WAITING: frontier=#${verdict.frontier.number}; ${verdict.reason.pending.length} check${verdict.reason.pending.length === 1 ? "" : "s"} pending\n`
         : `WAITING: frontier=#${verdict.frontier.number} is blocker-free; waiting for merge queue (${verdict.reason.unmergedCount} PR${verdict.reason.unmergedCount === 1 ? "" : "s"} unmerged)\n`;
@@ -156,6 +167,8 @@ export function renderPretty(verdict: T.WatcherVerdict): string {
     case "COMPLETE":
       return `COMPLETE: queued stack merged (${verdict.queue.length} PR${verdict.queue.length === 1 ? "" : "s"})\n`;
     case "TIMEOUT":
+      if (verdict.reason.kind === "github-pending")
+        return `TIMEOUT: ${githubPendingLabel(verdict.reason.github)}\n`;
       if (verdict.reason.kind === "pending-checks")
         return "TIMEOUT: checks still pending\n";
       if (verdict.reason.kind === "status-unavailable")

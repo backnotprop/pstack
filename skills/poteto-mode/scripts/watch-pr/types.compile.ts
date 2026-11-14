@@ -91,3 +91,15 @@ void refusalIsNotAllowed;
 void refusalIsNotClean;
 void readyWithBlockerExit;
 void readyWithoutProof;
+
+
+const unknownMerge = { ...cleanCi.github, mergeStateStatus: "UNKNOWN" } as const;
+
+// @ts-expect-error An unknown merge state cannot prove readiness.
+const unknownIsNotAllowed: GitHubMergeAllowed = unknownMerge;
+
+// @ts-expect-error CI cannot be clean before GitHub computes merge readiness.
+const unknownIsNotClean: CiClean = { ...cleanCi, github: unknownMerge };
+
+void unknownIsNotAllowed;
+void unknownIsNotClean;
