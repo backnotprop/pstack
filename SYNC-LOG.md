@@ -4,6 +4,7 @@ Each check against [`cursor/plugins/pstack`](https://github.com/cursor/plugins/t
 
 | Date | Upstream | Result |
 |---|---|---|
+| 2026-11-15 | 0.15.42 @ `bf0c7cd` | Synced. New default models (Fable 5.2, Opus 5.5, Gemini 4 Carbon). `how` and `why` are now one file each. Statechart reports SANY errors better. Upstream now gives any unknown model prefix its own family, so the mirror's `gpt-*` line from #19 was dropped in favor of upstream's. Kept the #14 and #17 fixes. 10 statechart tests fail on this Mac, the same on pure upstream. |
 | 2026-11-14 | 0.15.36 | No change in pstack. Upstream repo head `3dbd22f`. Closed PR #20, and its author reopened it upstream as cursor/plugins#1234. #18 is still a draft. #17 has no new replies. cursor/plugins#1147 is still open. |
 | 2026-11-13 | 0.15.36 | No change in pstack. Upstream repo head `3dbd22f`. New PR #20 (`unslop` style rules), waiting on a decision. #18 is still a draft. #17 has no new replies. cursor/plugins#1147 is still open. |
 | 2026-11-11 | 0.15.36 | No change in pstack. Upstream repo head `5866df5`. New issue #19 (Arena has no GPT model family) and new draft PR #18 (`watch-pr` waits while GitHub computes merge readiness), both waiting on a decision. #17 has no new replies. cursor/plugins#1147 is still open. |
