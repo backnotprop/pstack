@@ -45,16 +45,15 @@ Cursor's original README is [further down this page](#pstack).
 
 These skills don't call other pstack skills, so each one works alone:
 
-`unslop`, `bro`, `how`, `tdd`, `typescript-best-practices`, `arena`, `swarm`, `interrogate`, `reflect`, `show-me-your-work`, `figure-it-out`, `automate-me`, `correct`, `benchmark-checklist`, `in-your-own-words`, `sharpen`, `statechart`
+`unslop`, `bro`, `how`, `why`, `tdd`, `typescript-best-practices`, `arena`, `swarm`, `interrogate`, `reflect`, `show-me-your-work`, `figure-it-out`, `automate-me`, `correct`, `benchmark-checklist`, `in-your-own-words`, `sharpen`, `statechart`
 
 Some skills call other skills. Install these together:
 
 | Skill | Also install |
 |---|---|
 | `teach` | `how`, `why` |
-| `why` | `how` |
 | `technical-writing` | `unslop` |
-| `architect` | `arena`, `how` |
+| `architect` | `arena` |
 | `blast-radius` | `arena`, `how`, `why`, `unslop` |
 | `create-verification-skill` | `maintain-verification-skill` |
 | `create-formal-verification-skill` | `maintain-formal-verification-skill`, `statechart` |
