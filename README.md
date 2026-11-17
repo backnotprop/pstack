@@ -31,13 +31,23 @@
 
 ## Install
 
-pstack is a folder of plain [Agent Skills](https://agentskills.io) (`skills/<name>/SKILL.md`). You don't need [Cursor](https://github.com/cursor/plugins/tree/main/pstack). The [`skills` CLI](https://skills.sh) installs them into Claude Code, Codex, Pi, Cursor, OpenCode, and other agents:
+pstack is a folder of plain [Agent Skills](https://agentskills.io) (`skills/<name>/SKILL.md`). You don't need [Cursor](https://github.com/cursor/plugins/tree/main/pstack). The [`skills` CLI](https://skills.sh) installs them into Claude Code, Codex, Pi, Cursor, OpenCode, and other agents.
+
+This fork is `niccolox/pstack-bets`. It holds all of pstack plus four bet skills. Install from the fork to get both:
 
 ```bash
-npx skills add backnotprop/pstack
+npx skills add niccolox/pstack-bets
 ```
 
 The CLI shows every skill in a list you can search. Select the skills you want, then select your agents.
+
+Where the skills come from:
+
+| Repository | What it is |
+|---|---|
+| [`cursor/plugins/pstack`](https://github.com/cursor/plugins/tree/main/pstack) | The original pstack, by Poteto |
+| [`backnotprop/pstack`](https://github.com/backnotprop/pstack) | The standalone mirror, with harness-neutral edits |
+| [`niccolox/pstack-bets`](https://github.com/niccolox/pstack-bets) | This fork: the mirror plus the bet skills |
 
 ## Skills
 
@@ -78,16 +88,52 @@ The mirror also carries two community fixes that aren't upstream yet:
 - `statechart` runs on Windows: it no longer needs `/bin/sh`, reads TLC output with Windows line endings, and cleans up its temp folder after a killed run. Patch by [@yasuyuki](https://github.com/yasuyuki). ([#17](https://github.com/backnotprop/pstack/issues/17))
 ## What this fork adds
 
-This fork adds four skills that keep a product bet honest. Each one starts only from its slash command.
+This fork adds four skills that keep a product bet honest. A bet is a product idea that gets a fast build, real users, and a go, no-go, or pivot decision on a fixed date. Each skill starts only from its slash command.
 
-- `bet-record` frames a bet's core question, kill criteria, and decision date before code. It logs one row for each verified unit, scores the criteria from evidence, and writes the go, no-go, or pivot memo. An operator dialog asks the operator to confirm the criteria and the decision.
-- `bet-diligence` reviews the code, the team, and the market of a dependency, product, or company, and writes a memo with evidence for each finding.
-- `bet-omni` runs one bet through ten stages, from frame to the memo. It asks the operator each product call through the question tool, checks a gate before each next stage, and keeps progress so a later call continues at the same stage.
-- `bet-discovery` plans customer interviews about past behavior and logs only what people did, from a second call up to a payment.
+| Skill | What it does |
+|---|---|
+| `bet-omni` | Runs one bet through ten stages: frame, build-or-buy, scope, evals, build, harden, users, iterate, score, memo. It asks the operator each product call through the question tool, checks a gate before each next stage, and keeps progress so a later call continues at the same stage. |
+| `bet-record` | Frames a bet's core question, kill criteria, and decision date before code. Logs one row for each verified unit, scores the criteria from evidence, and writes the memo. An operator dialog confirms the criteria and the decision. |
+| `bet-diligence` | Reviews the code, the team, and the market of a dependency, product, or company, and writes a memo with evidence for each finding. |
+| `bet-discovery` | Plans customer interviews about past behavior and logs only what people did, from a second call up to a payment. |
 
-`poteto-mode` gets one trigger: when the project `CLAUDE.md` or `AGENTS.md` names a bet record, it runs `bet-record`. Keep that line when you merge `upstream`.
+`poteto-mode` in this fork has one more trigger: when the project `CLAUDE.md` or `AGENTS.md` names a bet record, it runs `bet-record`.
 
-Each skill has a checker script with tests: `python3 -m pytest skills/bet-record/scripts skills/bet-diligence/scripts skills/bet-omni/scripts`.
+### Use the bet skills in a new project
+
+1. Install the skills from the project root. Add `-a claude-code`, or the name of another agent, to skip the agent prompt:
+
+   ```bash
+   npx skills add niccolox/pstack-bets -s bet-omni -s bet-record -s bet-diligence -s bet-discovery --copy
+   ```
+
+   `bet-omni` reads the `bet-record` scripts from the folder beside it, so install the four skills together. Add `-s poteto-mode` and the `principle-*` skills to get the build stage's playbook, or use `--all` to install everything.
+
+2. Name the bet record in the project `CLAUDE.md` or `AGENTS.md`, so that every bet skill and `poteto-mode` find it:
+
+   ```markdown
+   The bet record is `docs/bet-process.md`. The `bet-record` skill in `.claude/skills/bet-record/` reads and checks it.
+   ```
+
+   With no line, the skills use `docs/bet-process.md`.
+
+3. Start the first bet in your agent:
+
+   ```text
+   /bet-omni
+   ```
+
+   The skill asks for one paragraph about the problem, then runs the frame stage. Later, `/bet-omni BET-001` continues at the stage where the last run stopped.
+
+4. Commit `skills-lock.json` and the record. The progress file is `<record folder>/omni/BET-NNN.json`. Commit it too when the team shares the bet.
+
+To update the skills later, run `npx skills update`, then read `git diff`. An update can replace changes that you made to an installed skill.
+
+Each bet skill has a checker script with tests:
+
+```bash
+python3 -m pytest skills/bet-record/scripts skills/bet-diligence/scripts skills/bet-omni/scripts
+```
 <!-- mirror:end -->
 
 ---
