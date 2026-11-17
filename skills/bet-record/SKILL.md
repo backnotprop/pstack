@@ -56,5 +56,6 @@ The script prints a JSON list. Each item is one question-tool call that holds at
 - Criteria and the decision date come before the first line of code. A bet in `Building` with no confirmed criteria is a check failure, not a warning.
 - Do not move the decision date. Do not soften a criterion to keep a bet alive.
 - Every result needs evidence. A compliment is not usage, and a promise is not payment.
+- The **bet-omni** skill runs these steps with the other bet skills, in stage order from frame to memo.
 - The **bet-discovery** skill fills **Customer evidence**. The **bet-diligence** skill writes the memo for the build-or-buy scan and for any outside dependency of the bet.
 - When the record copies text from an outside source, follow the record's anonymization rules.
