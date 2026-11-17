@@ -26,6 +26,7 @@ The remaining triggers live only here:
 - A number you measured → **benchmark-checklist**.
 - PR status → the **Babysit** playbook, not Cursor's built-in babysit skill. Landing a green stack → the **Shipping** playbook.
 - Bot review comments → judge each on its merits.
+- Project `CLAUDE.md` or `AGENTS.md` names a bet record → **bet-record**. Run its checker before the first code. A failure that needs confirmed criteria stops the code and starts `frame`. Run `log` after each verified unit, and `score` then `memo` on the decision date.
 - Long or unattended work → **show-me-your-work**.
 
 ## Principles

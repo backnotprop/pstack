@@ -61,6 +61,9 @@ Some skills call other skills. Install these together:
 | `ketchup-video` | `ketchup`, `bro` |
 | `poteto-mode` | all `principle-*` skills and most of the other skills |
 | `poteto-help` | the skills you want help with |
+| `bet-record` | `bet-discovery`, `bet-diligence`, `show-me-your-work`, `technical-writing`, `unslop`, `principle-prove-it-works` |
+| `bet-diligence` | `bet-record`, `how`, `blast-radius`, `technical-writing`, `unslop` |
+| `bet-discovery` | `bet-record` |
 
 Skills that spawn subagents point to the Subagents section of `poteto-mode` to pick each subagent's effort. Without `poteto-mode`, they use the default effort.
 
@@ -72,6 +75,17 @@ The mirror also carries two community fixes that aren't upstream yet:
 
 - `no-comments` keeps a comment about an outside rule (a dependency, platform, or protocol) when it can't check the rule, and marks it for review instead of deleting it. A rejected review no longer stops the whole run. ([#14](https://github.com/backnotprop/pstack/issues/14))
 - `statechart` runs on Windows: it no longer needs `/bin/sh`, reads TLC output with Windows line endings, and cleans up its temp folder after a killed run. Patch by [@yasuyuki](https://github.com/yasuyuki). ([#17](https://github.com/backnotprop/pstack/issues/17))
+## What this fork adds
+
+This fork adds three skills that keep a product bet honest. Each one starts only from its slash command.
+
+- `bet-record` frames a bet's core question, kill criteria, and decision date before code. It logs one row for each verified unit, scores the criteria from evidence, and writes the go, no-go, or pivot memo. An operator dialog asks the operator to confirm the criteria and the decision.
+- `bet-diligence` reviews the code, the team, and the market of a dependency, product, or company, and writes a memo with evidence for each finding.
+- `bet-discovery` plans customer interviews about past behavior and logs only what people did, from a second call up to a payment.
+
+`poteto-mode` gets one trigger: when the project `CLAUDE.md` or `AGENTS.md` names a bet record, it runs `bet-record`. Keep that line when you merge `upstream`.
+
+Each skill has a checker script with tests: `python3 -m pytest skills/bet-record/scripts skills/bet-diligence/scripts`.
 <!-- mirror:end -->
 
 ---
