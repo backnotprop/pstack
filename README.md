@@ -74,7 +74,7 @@ Some skills call other skills. Install these together:
 | `bet-record` | `bet-discovery`, `bet-diligence`, `show-me-your-work`, `technical-writing`, `unslop`, `principle-prove-it-works` |
 | `bet-diligence` | `bet-record`, `how`, `blast-radius`, `technical-writing`, `unslop` |
 | `bet-discovery` | `bet-record` |
-| `bet-omni` | `bet-record`, `bet-diligence`, `bet-discovery`, `poteto-mode` |
+| `bookie` | `bet-record`, `bet-diligence`, `bet-discovery`, `poteto-mode` |
 
 Skills that spawn subagents point to the Subagents section of `poteto-mode` to pick each subagent's effort. Without `poteto-mode`, they use the default effort.
 
@@ -92,7 +92,7 @@ This fork adds four skills that keep a product bet honest. A bet is a product id
 
 | Skill | What it does |
 |---|---|
-| `bet-omni` | Runs one bet through ten stages: frame, build-or-buy, scope, evals, build, harden, users, iterate, score, memo. It asks the operator each product call through the question tool, checks a gate before each next stage, and keeps progress so a later call continues at the same stage. |
+| `bookie` | Runs one bet through ten stages: frame, build-or-buy, scope, evals, build, harden, users, iterate, score, memo. It asks the operator each product call through the question tool, checks a gate before each next stage, and keeps progress so a later call continues at the same stage. |
 | `bet-record` | Frames a bet's core question, kill criteria, and decision date before code. Logs one row for each verified unit, scores the criteria from evidence, and writes the memo. An operator dialog confirms the criteria and the decision. |
 | `bet-diligence` | Reviews the code, the team, and the market of a dependency, product, or company, and writes a memo with evidence for each finding. |
 | `bet-discovery` | Plans customer interviews about past behavior and logs only what people did, from a second call up to a payment. |
@@ -104,10 +104,10 @@ This fork adds four skills that keep a product bet honest. A bet is a product id
 1. Install the skills from the project root. Add `-a claude-code`, or the name of another agent, to skip the agent prompt:
 
    ```bash
-   npx skills add niccolox/pstack-bets -s bet-omni -s bet-record -s bet-diligence -s bet-discovery --copy
+   npx skills add niccolox/pstack-bets -s bookie -s bet-record -s bet-diligence -s bet-discovery --copy
    ```
 
-   `bet-omni` reads the `bet-record` scripts from the folder beside it, so install the four skills together. Add `-s poteto-mode` and the `principle-*` skills to get the build stage's playbook, or use `--all` to install everything.
+   `bookie` reads the `bet-record` scripts from the folder beside it, so install the four skills together. Add `-s poteto-mode` and the `principle-*` skills to get the build stage's playbook, or use `--all` to install everything.
 
 2. Name the bet record in the project `CLAUDE.md` or `AGENTS.md`, so that every bet skill and `poteto-mode` find it:
 
@@ -120,19 +120,19 @@ This fork adds four skills that keep a product bet honest. A bet is a product id
 3. Start the first bet in your agent:
 
    ```text
-   /bet-omni
+   /bookie
    ```
 
-   The skill asks for one paragraph about the problem, then runs the frame stage. Later, `/bet-omni BET-001` continues at the stage where the last run stopped.
+   The skill asks for one paragraph about the problem, then runs the frame stage. Later, `/bookie BET-001` continues at the stage where the last run stopped.
 
-4. Commit `skills-lock.json` and the record. The progress file is `<record folder>/omni/BET-NNN.json`. Commit it too when the team shares the bet.
+4. Commit `skills-lock.json` and the record. The progress file is `<record folder>/bookie/BET-NNN.json`. Commit it too when the team shares the bet.
 
 To update the skills later, run `npx skills update`, then read `git diff`. An update can replace changes that you made to an installed skill.
 
 Each bet skill has a checker script with tests:
 
 ```bash
-python3 -m pytest skills/bet-record/scripts skills/bet-diligence/scripts skills/bet-omni/scripts
+python3 -m pytest skills/bet-record/scripts skills/bet-diligence/scripts skills/bookie/scripts
 ```
 <!-- mirror:end -->
 

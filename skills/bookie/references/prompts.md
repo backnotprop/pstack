@@ -1,6 +1,6 @@
 # Prompts
 
-Each stage in `omni.py` names the prompts it uses by number. Replace each `<placeholder>` before you use a prompt. Use a prompt on yourself, give it to a subagent, or show it to the operator to use elsewhere.
+Each stage in `bookie.py` names the prompts it uses by number. Replace each `<placeholder>` before you use a prompt. Use a prompt on yourself, give it to a subagent, or show it to the operator to use elsewhere.
 
 ## 1. Frame the bet (hour 0)
 

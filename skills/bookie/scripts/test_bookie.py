@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from omni import (
+from bookie import (
     HANDOFF,
     PRELAUNCH,
     STAGES,
@@ -64,7 +64,7 @@ FRAMED = {
 }
 
 
-class OmniTest(unittest.TestCase):
+class BookieTest(unittest.TestCase):
     def setUp(self):
         self.folder = tempfile.TemporaryDirectory()
         self.record = Path(self.folder.name) / "bets.md"

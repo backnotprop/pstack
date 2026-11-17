@@ -1,10 +1,10 @@
 ---
-name: bet-omni
-description: "Run a product bet from the first question to the go, no-go, or pivot memo in one guided session: frame, build-or-buy, scope, evals, build, harden, users, iterate, score, memo. Ask the operator each product call through the question tool, and keep progress so a later call continues where the last one stopped. Use for /bet-omni, 'run the whole bet', 'walk me through the bet', 'start a new bet end to end', or 'where is this bet'."
+name: bookie
+description: "Run a product bet from the first question to the go, no-go, or pivot memo in one guided session: frame, build-or-buy, scope, evals, build, harden, users, iterate, score, memo. Ask the operator each product call through the question tool, and keep progress so a later call continues where the last one stopped. Use for /bookie, 'run the whole bet', 'walk me through the bet', 'start a new bet end to end', or 'where is this bet'."
 disable-model-invocation: true
 ---
 
-# Bet omni
+# Bookie
 
 This skill runs one bet through ten stages in a fixed order. Each stage does its work, asks the operator its questions, and passes a gate before the next stage starts. The other bet skills own the record and its format. This skill decides the order and holds the progress.
 
@@ -19,7 +19,7 @@ The operator started this skill to run the whole bet. So at each stage, read the
 ## Stage loop
 
 ```sh
-python3 .claude/skills/bet-omni/scripts/omni.py <record> BET-NNN next
+python3 .claude/skills/bookie/scripts/bookie.py <record> BET-NNN next
 ```
 
 The script prints the current stage as JSON: its goal, the skill to follow, the prompt numbers in [`references/prompts.md`](references/prompts.md), the sections of [`references/practices.md`](references/practices.md) to read, the gate result, and the question calls. Then do these steps:
@@ -30,7 +30,7 @@ The script prints the current stage as JSON: its goal, the skill to follow, the 
 4. Mark the stage done with its evidence and answers:
 
    ```sh
-   python3 .claude/skills/bet-omni/scripts/omni.py <record> BET-NNN done <stage> \
+   python3 .claude/skills/bookie/scripts/bookie.py <record> BET-NNN done <stage> \
      --evidence <path from the record folder> --answer "<label>=<value>" --note "<text>"
    ```
 
@@ -56,7 +56,7 @@ A stage that does not apply can be skipped with `skip <stage> --note "<reason>"`
 
 ## Pauses
 
-The users and iterate stages wait for people and for days. When a stage waits for something outside the session, end the turn. Say what the stage waits for, the date to come back, and the command to continue: `/bet-omni BET-NNN`. The progress file is `<record folder>/omni/BET-NNN.json`, so the next call starts at the same stage with the answers that are already saved.
+The users and iterate stages wait for people and for days. When a stage waits for something outside the session, end the turn. Say what the stage waits for, the date to come back, and the command to continue: `/bookie BET-NNN`. The progress file is `<record folder>/bookie/BET-NNN.json`, so the next call starts at the same stage with the answers that are already saved.
 
 ## A bet that started before this skill
 

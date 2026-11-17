@@ -395,7 +395,7 @@ BY_NAME = {stage.name: stage for stage in STAGES}
 
 
 def progress_path(record: Path, bet_id: str) -> Path:
-    return record.parent / "omni" / f"{bet_id}.json"
+    return record.parent / "bookie" / f"{bet_id}.json"
 
 
 def load_progress(record: Path, bet_id: str) -> dict[str, Entry]:

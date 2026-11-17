@@ -1,6 +1,6 @@
 # Practices
 
-Build fast to find out whether an idea is real, then make an honest go or no-go call. Each stage in `omni.py` names the sections here that it uses.
+Build fast to find out whether an idea is real, then make an honest go or no-go call. Each stage in `bookie.py` names the sections here that it uses.
 
 ## Principles
 
