@@ -4,6 +4,7 @@ Each check against [`cursor/plugins/pstack`](https://github.com/cursor/plugins/t
 
 | Date | Upstream | Result |
 |---|---|---|
+| 2026-11-18 | 0.15.43 | No change in pstack. Upstream repo head `93b916d`. New PR #23 adds four new skills (bet-* and bookie), waiting on a decision. Its author opened and closed #21 and #22 themselves. #18 is still a draft. #17 has no new replies. |
 | 2026-11-17 | 0.15.43 @ `e1cc031` | Synced. Shorter skill texts, a new `worker.md` for agents that poteto-mode starts, and Opus-first routing capped at xhigh. Upstream deleted the Orchestrate playbook, `check-plan`, and the architect and reflect reference files, so the mirror dropped its edits to them. Kept the #14 and #17 fixes. Updated the README install table: `why` and `architect` no longer need `how`. |
 | 2026-11-16 | 0.15.42 | No change in pstack. Upstream repo head `b63c29f`. #18 is still a draft. #17 has no new replies. cursor/plugins#1147 is still open. |
 | 2026-11-15 | 0.15.42 @ `bf0c7cd` | Synced. New default models (Fable 5.2, Opus 5.5, Gemini 4 Carbon). `how` and `why` are now one file each. Statechart reports SANY errors better. Upstream now gives any unknown model prefix its own family, so the mirror's `gpt-*` line from #19 was dropped in favor of upstream's. Kept the #14 and #17 fixes. 10 statechart tests fail on this Mac, the same on pure upstream. |
