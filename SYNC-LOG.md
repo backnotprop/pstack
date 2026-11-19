@@ -4,6 +4,7 @@ Each check against [`cursor/plugins/pstack`](https://github.com/cursor/plugins/t
 
 | Date | Upstream | Result |
 |---|---|---|
+| 2026-11-19 | 0.15.44 @ `e58dd04` | Synced. Upstream moved the Gemini panel seat from Gemini 4 Carbon to Gemini 4 Neon in arena, poteto-mode, setup-pstack, the README and the Claude Code harness doc. Took the new model names and setup-pstack's new step that replaces old Gemini panel entries, written as "settings file" like the rest of the mirror. README mirror section unchanged. No new issues or PRs here. #18 is still a draft. New upstream PR cursor/plugins#1287 fixes the CRLF part of #17. The mirror already carries that fix. |
 | 2026-11-18 | 0.15.43 | Second check today. No change in pstack. Upstream repo head `35a9094`. No new issues or PRs. #18 is still a draft. #17 has no new replies. Upstream PRs cursor/plugins#1147, #1151, #848 and #1234 are still open. |
 | 2026-11-18 | 0.15.43 | No change in pstack. Upstream repo head `93b916d`. New PR #23 adds four new skills (bet-* and bookie), waiting on a decision. Its author opened and closed #21 and #22 themselves. #18 is still a draft. #17 has no new replies. |
 | 2026-11-17 | 0.15.43 @ `e1cc031` | Synced. Shorter skill texts, a new `worker.md` for agents that poteto-mode starts, and Opus-first routing capped at xhigh. Upstream deleted the Orchestrate playbook, `check-plan`, and the architect and reflect reference files, so the mirror dropped its edits to them. Kept the #14 and #17 fixes. Updated the README install table: `why` and `architect` no longer need `how`. |
