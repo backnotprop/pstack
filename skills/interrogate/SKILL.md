@@ -6,6 +6,8 @@ disable-model-invocation: true
 
 # Interrogate
 
+In Devin, read `docs/harness/devin.md` in the pstack plugin before applying subagent or model instructions in this skill.
+
 Adversaries try to break a change or a design. A finding survives only when a run proves it. Report the findings. Do not apply fixes.
 
 ## Frame

@@ -44,6 +44,8 @@ Never copy Cursor's files onto `main` directly. That erases the edits.
 
    Rewrite any new hits the same way as the existing edits. The Harness section in `skills/poteto-mode/SKILL.md` lists the mappings.
 
+   Preserve `.devin-plugin/plugin.json` and `docs/harness/devin.md`. Update the Devin manifest's shared metadata to match `plugin.json`. Keep the shared subagent profiles portable and retain the Devin-specific skill mappings.
+
 4. Add a row to the top of `SYNC-LOG.md` with the date, the upstream version, and the result. Add one also when nothing changed upstream.
 
 5. Push both branches:

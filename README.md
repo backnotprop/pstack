@@ -39,6 +39,18 @@ npx skills add backnotprop/pstack
 
 The CLI shows every skill in a list you can search. Select the skills you want, then select your agents.
 
+### Devin
+
+Install this repository as a Devin plugin:
+
+```bash
+devin plugins install cain/pstack-devin
+# Or link a local checkout for development:
+devin plugins install --local /path/to/pstack-devin
+```
+
+Start a new session and run `/pstack:poteto-mode`, `/pstack:how`, or another namespaced skill. Devin installs the whole plugin, not individual skills. Its CLI and Desktop can load the bundled subagents; Devin cloud sessions cannot load plugin subagents. Devin also selects subagent models by profile rather than per call, so pstack cannot guarantee cross-model panels or its Cursor-specific model settings. See [pstack in Devin](docs/harness/devin.md) for fallbacks and limitations.
+
 ## Skills
 
 Cursor's original README is [further down this page](#pstack).
