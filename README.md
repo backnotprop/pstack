@@ -68,10 +68,11 @@ Skills that spawn subagents point to the Subagents section of `poteto-mode` to p
 
 Many skills were Cursor-specific. They've been rewritten to work in any harness.
 
-The mirror also carries two community fixes that aren't upstream yet:
+The mirror also carries three community fixes that aren't upstream yet:
 
 - `no-comments` keeps a comment about an outside rule (a dependency, platform, or protocol) when it can't check the rule, and marks it for review instead of deleting it. A rejected review no longer stops the whole run. ([#14](https://github.com/backnotprop/pstack/issues/14))
 - `statechart` runs on Windows: it no longer needs `/bin/sh`, reads TLC output with Windows line endings, and cleans up its temp folder after a killed run. Patch by [@yasuyuki](https://github.com/yasuyuki). ([#17](https://github.com/backnotprop/pstack/issues/17))
+- `watch-pr` no longer adds a pull request from a fork to a watched stack, so a fork's review comments stay out of the agent's context, and it strips control characters from review paths, authors and comment text before printing them. Patch from [cursor/plugins#1194](https://github.com/cursor/plugins/pull/1194). ([cursor/plugins#1193](https://github.com/cursor/plugins/issues/1193))
 <!-- mirror:end -->
 
 ---
