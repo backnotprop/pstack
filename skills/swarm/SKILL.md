@@ -6,6 +6,8 @@ disable-model-invocation: true
 
 # Swarm
 
+In Devin, read `docs/harness/devin.md` in the pstack plugin before applying subagent or model instructions in this skill.
+
 ## Start
 
 Open a todolist with one entry per phase before launching anything.
@@ -28,7 +30,7 @@ Spawn all N workers in one message with `subagent_type: generalPurpose`, `enviro
 
 When a worker must start from a non-default pushed branch, pass `cloud_base_branch`.
 
-**Other harnesses.** These parameters belong to Cursor's `Task` tool, and `environment: "cloud"` runs a Cursor cloud agent. In another harness, use its subagent tool: `Agent` in Claude Code (`subagent_type: general-purpose`), `task` in OpenCode (`subagent_type: general`), `spawn_agent` in Codex. Workers run locally there, so give each one its own worktree or output path. Keep the brief and the model. Drop parameters your tool doesn't have. If your harness has no subagent tool, as in Pi without an extension, run the workers yourself, one after another.
+**Other harnesses.** These parameters belong to Cursor's `Task` tool, and `environment: "cloud"` runs a Cursor cloud agent. In another harness, use its subagent tool: `Agent` in Claude Code (`subagent_type: general-purpose`), `task` in OpenCode (`subagent_type: general`), `spawn_agent` in Codex, `run_subagent` in Devin. Workers run locally there, so give each one its own worktree or output path. Keep the brief and, where supported, the model. Drop parameters your tool doesn't have. If your harness has no subagent tool, as in Pi without an extension, run the workers yourself, one after another.
 
 Every brief stands alone. Include the goal, scope, exact slice or race arm, how to verify, and what to report. Reports use `PASS`, `ISSUES`, or `BLOCKED` with evidence. A worker that can prove a defect reports `ISSUES` and lists every issue it can prove, not only the first.
 

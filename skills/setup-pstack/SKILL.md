@@ -13,11 +13,15 @@ Write pstack's model settings, one model per role:
 
 "The settings file" below means the file for your harness. In Claude Code, if that file is missing, read `~/.agents/pstack-models.md` instead, where older versions of this skill wrote it.
 
+## Devin CLI
+
+If you are using Devin, its `run_subagent` selects a profile, not a model per call. Do not write pstack's per-role model file or claim its settings will control Devin. Read `docs/harness/devin.md` in the pstack plugin and explain the available profile and model options. Stop here; the steps below are for other harnesses.
+
 ## Steps
 
 ### 1. Detect available models
 
-Enumerate the model slugs you can pass to a subagent in this session (Cursor `Task`, Claude Code `Agent`, OpenCode `task`, Codex `spawn_agent`). That is the dependable source. If your harness also has a command that lists the user's models, prefer it for completeness (for example `opencode models` or `pi --list-models`). If you cannot detect any, ask the user to paste the slugs they have access to. Never write a real slug you have not confirmed is available. The aliases `inherit-parent` and `auto` are always valid even though they are not detected slugs.
+Enumerate the model slugs you can pass to a subagent in this session (Cursor `Task`, Claude Code `Agent`, OpenCode `task`, Codex `spawn_agent`, Devin `run_subagent`). That is the dependable source. If your harness also has a command that lists the user's models, prefer it for completeness (for example `opencode models` or `pi --list-models`). If you cannot detect any, ask the user to paste the slugs they have access to. Never write a real slug you have not confirmed is available. The aliases `inherit-parent` and `auto` are always valid even though they are not detected slugs.
 
 ### 2. Load current state
 

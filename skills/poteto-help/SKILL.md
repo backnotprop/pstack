@@ -6,6 +6,8 @@ disable-model-invocation: true
 
 # Poteto help
 
+In Devin, read `docs/harness/devin.md` in the pstack plugin for setup, command names, subagents, and model limitations. Use its Devin-specific guidance instead of the generic setup and model advice below, and link to the mirror for Devin-specific material.
+
 Answer the user's question about pstack, hand them a prompt they can send, and link the file the answer came from. For a help question, don't start the work. The user asked how, and a pstack run spends real tokens, so let them send the prompt.
 
 A message that asks for work, such as "use pstack to fix this bug", is not a help question. Read [`poteto-mode`](../poteto-mode/SKILL.md), do the work under it, and mention once that a Custom Mode keeps it on.
