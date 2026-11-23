@@ -68,6 +68,8 @@ Skills that spawn subagents point to the Subagents section of `poteto-mode` to p
 
 Many skills were Cursor-specific. They've been rewritten to work in any harness.
 
+Codex ignores the `disable-model-invocation: true` mark that keeps most pstack skills from running unless you call them. So each marked skill also gets an `agents/openai.yaml` that tells Codex the same thing. The skill stays out of Codex's startup prompt, and `$skill` still runs it. ([#26](https://github.com/backnotprop/pstack/issues/26))
+
 The mirror also carries two community fixes that aren't upstream yet:
 
 - `no-comments` keeps a comment about an outside rule (a dependency, platform, or protocol) when it can't check the rule, and marks it for review instead of deleting it. A rejected review no longer stops the whole run. ([#14](https://github.com/backnotprop/pstack/issues/14))

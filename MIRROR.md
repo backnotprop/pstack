@@ -44,6 +44,12 @@ Never copy Cursor's files onto `main` directly. That erases the edits.
 
    Rewrite any new hits the same way as the existing edits. The Harness section in `skills/poteto-mode/SKILL.md` lists the mappings.
 
+   Then give Codex the explicit-only mark. Codex ignores `disable-model-invocation: true` and reads `agents/openai.yaml` instead, so this script writes that file for each marked skill and removes the ones it wrote for skills that lost the mark:
+
+   ```bash
+   python3 mirror-assets/codex-policy.py
+   ```
+
 4. Add a row to the top of `SYNC-LOG.md` with the date, the upstream version, and the result. Add one also when nothing changed upstream.
 
 5. Push both branches:
