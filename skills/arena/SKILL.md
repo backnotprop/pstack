@@ -6,6 +6,8 @@ disable-model-invocation: true
 
 # Arena
 
+In Devin, read `docs/harness/devin.md` in the pstack plugin before applying subagent or model instructions in this skill.
+
 Open a todolist with one entry per phase (Frame, Fan out, Cross-judge, Pick, Graft, Verify) before launching anything.
 
 ## Phase A: Frame
