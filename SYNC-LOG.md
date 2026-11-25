@@ -4,6 +4,7 @@ Each check against [`cursor/plugins/pstack`](https://github.com/cursor/plugins/t
 
 | Date | Upstream | Result |
 |---|---|---|
+| 2026-11-25 | 0.15.48 | No change in pstack. Upstream repo head `41e4009`. No new issues or PRs. #25 has had no reply for five days since we asked for a smaller version. #18 is still a draft (no activity since 2026-11-11). The upstream PRs we watch are all still open. |
 | 2026-11-24 | 0.15.48 | No change in pstack. Upstream repo head `ca782ed`. No new issues or PRs. #25 has had no reply for four days since we asked for a smaller version. #18 is still a draft. The upstream PRs we watch are all still open. |
 | 2026-11-23 | 0.15.48 | Second check today. No change in pstack. Upstream repo head `96af3b7`, the same as the last sync. No new issues or PRs. #25 has no reply since we asked for a smaller version. #18 is still a draft. The upstream PRs we watch are all still open. |
 | 2026-11-23 | 0.15.48 @ `9e278fe` | Synced 0.15.47 and 0.15.48. New skill `reframe` teaches the expert words for what you're building, then rewrites your description with them. It's also added to poteto-help and the poteto-mode guide. Clean merge with no Cursor-only wording. Added `reframe` to the README's standalone list (it calls no other skill), and `codex-policy.py` gave it its Codex file (58 explicit-only skills now). The skills CLI finds 59 skills. No new issues or PRs. #25 has no reply since we asked for a smaller version. #18 is still a draft. |
