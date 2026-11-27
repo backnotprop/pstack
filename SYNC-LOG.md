@@ -4,6 +4,7 @@ Each check against [`cursor/plugins/pstack`](https://github.com/cursor/plugins/t
 
 | Date | Upstream | Result |
 |---|---|---|
+| 2026-11-27 | 0.15.48 | No change in pstack. Upstream repo head `b7b93c3`. New issue #27 (airclear) asks which skill made the animated README header. A draft reply is waiting on a decision. #25 has had no reply for seven days since we asked for a smaller version. #18 is still a draft. The upstream PRs we watch are all still open. |
 | 2026-11-25 | 0.15.48 | No change in pstack. Upstream repo head `41e4009`. No new issues or PRs. #25 has had no reply for five days since we asked for a smaller version. #18 is still a draft (no activity since 2026-11-11). The upstream PRs we watch are all still open. |
 | 2026-11-24 | 0.15.48 | No change in pstack. Upstream repo head `ca782ed`. No new issues or PRs. #25 has had no reply for four days since we asked for a smaller version. #18 is still a draft. The upstream PRs we watch are all still open. |
 | 2026-11-23 | 0.15.48 | Second check today. No change in pstack. Upstream repo head `96af3b7`, the same as the last sync. No new issues or PRs. #25 has no reply since we asked for a smaller version. #18 is still a draft. The upstream PRs we watch are all still open. |
